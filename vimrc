@@ -17,6 +17,8 @@ set formatoptions+=mMj
 set omnifunc=syntaxcomplete#Complete
 set foldmethod=manual
 set foldtext=MyFoldText()                                 
+set foldcolumn=0
+set nonu
 
 set noerrorbells
 set showcmd
@@ -24,19 +26,29 @@ set title
 set nowrap
 set ts=2
 set sw=2
-set vts=2
 set sts=2
 set nuw=3 
+
+set makeprg=./alltests.py
+set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P 
 
 let g:PHP_IndentFunctionCallParameters = 1
 let g:php_htmlInStrings = 1
 
+"============ autocommands =============
 
+
+" ============= abreviatioms ============
+
+iab ifph if(cond == False){<CR>}else{<CR>}<CR>
+iab ifpy if cond == False:<CR>pass<CR><BS><BS><BS><BS>else:<CR>pass<CR><BS><BS><BS><BS>
+iab classpy class MyClass:<CR>def __init__(self):<CR>
+iab defpy def func(x,y):<CR>pass<cr>
 "Custom fold text ------------------------------
 function MyFoldText()                                     
   let line = getline(v:foldstart)                         
   let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-  return v:folddashes . sub                               
+  return v:foldend."->". sub                               
 endfunction                                               
 
 
@@ -49,6 +61,10 @@ function! CleverTab()
 	      return "\<C-N>"
 	   endif
 	endfunction
+" Custom status line ========================
+	
+
+
 
 
 "------------------Menu stuff ------------------------<
@@ -56,41 +72,49 @@ source $VIMRUNTIME/menu.vim
 set wildmenu
 set cpo-=<
 set wcm=<C-Z>
-" TODO LUA Eval current line.....
 
 
 " --------- TODO snippets dialog stuff -------------
 
-"------------- TODO LISTS XXXXXXXXXXXXX-------xxxxxxxx XXX LINK With TODO Keyword in text
-let g:todoactions = ["New Task","Delete Task"]
-let g:todoitems = {} 
+" Custom menu TODO =========
 
-function! ActionSelect(id, result)
-"use a:result
-  if a:result == "New task"
-    call popup_dialog("new",#{})
-	elseif a:result == "View Tasks"
-
-	elseif a:result == 0 
-    
-  endif
-	
+function DoAction(id, result)
+	if a:result == 1
+		PyTest
+	elseif a:result == 2
+    exe "vert term php -S localhost:8080'"
+	elseif a:result == 3
+		pedit '<cWORD>'
+	elseif a:result == 4
+		split ~/.vimrc
+	elseif a:result == 5
+		ilist /TODO/
+	endif
 endfunction
 
-function! Todo_MenuDialog()
-	let g:popid = popup_menu(g:todoactions,{"callback":'ActionSelect'})
-  call popup_close(g:popid)
+function CustomMenuDialog()
+	let winid = popup_menu(['Run the current python file in a new terminal window',
+				\ 'Start PHP webserver',
+				\ 'Edit filename under cursor inside *preview window*',
+				\ 'Edit user .vimrc file',
+				\ 'Display TODO items'],	      
+				\ #{callback:'DoAction'})
 endfunction
 
 " -------- TODO Popup dialog for definition of keyword under cursor =---------  
 "  ( Ctrl-D in insert mode)
+if !has('nvim')
+au! CursorHold * nested call PopupDeclaration()
 function PopupDeclaration()
 	let [lnum,col] = searchpos(expand("<cword>"),'wn')
 	let g:winid = popup_atcursor(string(lnum).": ".getline(lnum)->trim(), #{})
 endfunction
+endif
 "[ctrl-s]
 "----------------sign stuff: put a mark and sign together. The sign text is the char to use
 " TODO make exit function that saves signs
+" TODO make it so that typing a prev. assigned char actually moves to it ...
+" i.e. goto char if it exists
 function SignMark()
 	let s:char = input("Character:")
 " char is single letter to be used with the 'm' command  
@@ -104,37 +128,37 @@ function SignMark()
 endfunction
 
 
-"----   TODO Dialog & popup stuff to show result of lua expr ------------------
-function EvalLuaDialog()
-  result = luaeval(s:ex) 
-	call popup_dialog(result, f)
-endfunction
-
 " -------- Emulate Function key presses in normal mode(<C-F>) 
 function! EmulateFunckeys()
 	let s:fnum = input("Function Key #")
 	if s:fnum
-    exe "normal <F".s:fnum.">"
+    execute "normal <F".s:fnum.">"
 	else
 		call popup_dialog("Please insert a number...", #{})
 		return ""
 	endif
 endfunction
- 
-		" TODO custom exit function (and keymap) to save signs or session.vim or Todo ITEMS
 
+" TODO Find all lines with todo in them and display them
+
+" Custom commands --------------------------------------------------:
+
+command PyTest execute("term python ".expand("%")) 
 " --------------------------- --->   XXX Custom Keymaps XXX -----------<==========
 let mapleader="\\"
-nmap <Bar> :call EvalLuaDialog()<CR>
+nmap <Bar> :PyTest<CR>
 noremap <silent><C-T> :tabnew<CR>:Explore<CR>
 nmap <silent><C-S> :call SignMark()<CR>
 
 noremap <silent><C-F> :call EmulateFunckeys()<CR>
 noremap <F1> :help<CR>
-nmap <silent><C-D> :call Todo_MenuDialog()<CR>
+nmap <silent><C-D> :call CustomMenuDialog()<CR>
 nmap <C-M> :emenu <C-Z>
 inoremap <Tab> <C-R>=CleverTab()<CR>
-inoremap <C-D> <C-O>:call PopupDeclaration()<CR>
+inoremap <C-D> <C-O>[I
+inoremap <C-S-Right> <C-O>>>
+inoremap <C-S-Left> <C-O><<
+
 " keys avail.
 " ---------
 "  nmap `
@@ -144,5 +168,4 @@ inoremap <C-D> <C-O>:call PopupDeclaration()<CR>
 "  nmap _
 "  nmap &
 " 
-
 
