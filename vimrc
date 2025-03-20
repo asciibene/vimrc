@@ -35,6 +35,12 @@ set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
 let g:PHP_IndentFunctionCallParameters = 1
 let g:php_htmlInStrings = 1
 
+"------------------Menu stuff ------------------------<
+source $VIMRUNTIME/menu.vim
+set wildmenu
+set cpo-=<
+set wcm=<C-Z>
+
 "============ autocommands =============
 
 
@@ -61,22 +67,8 @@ function! CleverTab()
 	      return "\<C-N>"
 	   endif
 	endfunction
-" Custom status line ========================
 	
 
-
-
-
-"------------------Menu stuff ------------------------<
-source $VIMRUNTIME/menu.vim
-set wildmenu
-set cpo-=<
-set wcm=<C-Z>
-
-
-" --------- TODO snippets dialog stuff -------------
-
-" Custom menu TODO =========
 
 function DoAction(id, result)
 	if a:result == 1
@@ -94,6 +86,7 @@ endfunction
 
 function CustomMenuDialog()
 	let winid = popup_menu(['Run the current python file in a new terminal window',
+		    \ 'Run the current lua file in a new terminal window',
 				\ 'Start PHP webserver',
 				\ 'Edit filename under cursor inside *preview window*',
 				\ 'Edit user .vimrc file',
@@ -138,8 +131,6 @@ function! EmulateFunckeys()
 		return ""
 	endif
 endfunction
-
-" TODO Find all lines with todo in them and display them
 
 " Custom commands --------------------------------------------------:
 
